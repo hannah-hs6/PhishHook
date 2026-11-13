@@ -79,7 +79,9 @@ function createApp(client) {
     }
   }));
   app.use(express.json({ limit: '100kb' }));
-  app.use(express.static(path.join(__dirname, 'public'))); // only /public is served, never server.js or .env
+  app.use(express.static(path.join(__dirname, 'public'))); // static assets only; server.js and .env are never served
+  // The demo is a single tracked file at the project root; explicitly serve only that file at `/`.
+  app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
   app.get('/api/health', (_req, res) => res.json({ ok: true, model: MODEL }));
 
