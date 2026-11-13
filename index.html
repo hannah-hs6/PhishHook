@@ -525,7 +525,7 @@ function processExtraction(run, exr, texts){
     const reject = why => { const k = squash(ind.value); if(run.seenRej.has(k)) return; run.seenRej.add(k); run.rejected++; event(run,'Rejected "'+short(ind.value)+'": '+why,'bad'); };
     if(!evidenceOk(ind, texts)){ reject('the evidence is not word for word in the sender\'s texts.'); continue; }
     const v = validateIndicator(ind.type, ind.value);
-    if(!v.ok){ reject(v.note+'.'); continue; }
+    if(!v.ok){ reject(TYPE_LABEL[ind.type] ? v.note+'.' : 'the extractor labeled it "'+ind.type+'", a payment rail the checker cannot verify. Held back for an analyst to review by hand.'); continue; }
     ind.note = v.note; acc.push(ind);
   }
   return acc;
@@ -547,7 +547,7 @@ async function runMatch(sc, mode, opts){
     const gateSaysScam = !!gate && gate.is_scam===true && Number(gate.confidence)>=0.6;
     const override = sc.id==='judge' && !gateSaysScam;   // the live attack must be able to start
     const engage = gateSaysScam || override;
-    event(run,'Scam gate: '+(gateSaysScam?'scam':'not a scam')+' · '+pct(gate&&gate.confidence)+' · '+String(gate&&gate.reason||'').slice(0,140), gateSaysScam?'info':'ok');
+    event(run,'Scam gate: '+(gateSaysScam?'scam':'not a scam')+' · '+pct(gate&&gate.confidence)+' · '+short(String(gate&&gate.reason||''),240), gateSaysScam?'info':'ok');
     if(override) event(run,'Gate was not confident on this opener. Analyst override: engaging so the live attack can proceed.','warn');
     if(override){ run.checks.gate = {s:'pass', d:'Gate was unsure. Engaged by analyst override for the live attack.'}; }
     else if(!!sc.legit === engage){ run.checks.gate = {s:'fail', d:sc.legit?'Engaged a legitimate message.':'Ignored a real scam.'}; }
@@ -667,7 +667,7 @@ function renderCards(){
   state.cards.forEach(c=>{
     const threads = new Set(state.cards.filter(x=>squash(x.value)===squash(c.value)).map(x=>x.runId)).size;
     const card = el('article','card');
-    const top = el('div','card-top'); top.append(el('span','card-type',TYPE_LABEL[c.type]||c.type), el('span','badge ok','Format valid'));
+    const top = el('div','card-top'); top.append(el('span','card-type',TYPE_LABEL[c.type]||c.type), el('span','badge ok', c.type==='bank_account' ? 'Length plausible' : 'Format valid'));
     const meta = el('div','card-meta'); meta.append(el('span','', 'Confidence '+pct(c.confidence)), el('span','', c.scenario));
     const foot = el('div','card-foot');
     foot.append(el('span','', 'Seen in '+threads+(threads===1?' thread':' threads')+' · needs analyst review'));
